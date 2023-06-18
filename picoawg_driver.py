@@ -118,17 +118,21 @@ class Pico:
             offset = 0.5-0.5*k
 
         # handle arb_data
+        # resample to nsamp points
+        arb_data = signal.resample(arb_data, nsamp)
         # norm to [-1, 1]
         arb_data = (arb_data-arb_data.min()) / \
             (arb_data.max()-arb_data.min())*2-1
-        # resample to nsamp points
-        arb_data = signal.resample(arb_data, nsamp)
 
         # calculate lut table
-        buf = bytearray(nsamp*4)
+        buf = bytearray(nsamp*2)
         for iword in range(int(nsamp/2)):
-            val1 = int(16383*arb_data[(dup*(iword*2+0)) % nsamp])+8192
-            val2 = int(16383*arb_data[(dup*(iword*2+1)) % nsamp])+8192
+            # v = v*w.amplitude*m
+            # v = v+w.offset+s
+            val1 = int(
+                16383*(arb_data[(dup*(iword*2+0)) % nsamp]*amplitude+offset))+8192
+            val2 = int(
+                16383*(arb_data[(dup*(iword*2+1)) % nsamp]*amplitude+offset))+8192
 
             word = val1 + (val2 << 14)
             buf[iword*4+0] = (word & (255 << 0)) >> 0
@@ -136,15 +140,26 @@ class Pico:
             buf[iword*4+2] = (word & (255 << 16)) >> 16
             buf[iword*4+3] = (word & (255 << 24)) >> 24
 
-        # write wavbuf[ibuf]
-        # command = "wavbuf[ibuf][0:{}] = [".format(nsamp*4)
-        # for i in range(100):
-        #     command = command+hex(buf[i])+","
-        # command = command+"]"
-        command = "wavbuf[ibuf][0:{}]={}".format(nsamp*4, bytes(buf).__str__())
-        print(nsamp)
-        print(command)
-        # self.send_command(command)
+        # 分组发出
+        group_size = 256
+        num_groups = (nsamp*2) // group_size
+        remaining_samples = (nsamp*2) % group_size
+        r = [group_size for _ in range(num_groups)]
+        if remaining_samples > 0:
+            r.append(remaining_samples)
+
+        st = 0
+        for n in r:
+            command = "temp=bytearray(("
+            for d in buf[st:(st+n)]:
+                command += "{:d},".format(d)
+            command += "))"
+            # print(command)
+            self.send_command(command)
+            self._wait_exec_done()
+            self.send_command("data_mov({}, {})".format(st, n))
+            self._wait_exec_done()
+            st += n
 
     def get_preview_data(self, wave_type, wave_args, arb_data=None):
         if wave_type == "Sine":
@@ -195,6 +210,18 @@ class Pico:
 
     def _noise(self, x, pars):  # p0=quality: 1=uniform >10=gaussian
         return sum([random()-0.5 for _ in range(pars[0])])*sqrt(12/pars[0])
+
+    def _wait_exec_done(self):
+        while True:
+            # 读取一个字节
+            byte_data = self.ser.read(1)
+
+            # 判断是否接收到指定的字节序列
+            if byte_data == b'\x3E':
+                # 接收到第一个字节
+                if self.ser.read(3) == b'\x3E\x3E\x20':
+                    # print("接收到指定字节序列")
+                    break
 
 
 if __name__ == '__main__':
