@@ -438,6 +438,11 @@ class Win(WinGUI):
         self.preview_canvas.draw()
         self.preview_canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
 
+        # set device
+        if not self.pico.is_open():
+            tk.messagebox.showwarning(
+                title='Warning', message='Device offline. Connect it first.')
+            return
         self.pico.set_wave(wave_type, wave_args, arb_data)
 
     def __event_bind(self):
@@ -455,18 +460,18 @@ class Win(WinGUI):
 
 if __name__ == "__main__":
     pico = Pico()
-    devices, pico_device = pico.list_ports()
-
     win = Win()
     win.pico = pico
     win.iconbitmap("icon.ico")
-    win.widget_dic["tk_select_box_liy6xbef"]["values"] = devices
 
     retry = True
     while retry:
         try:
+            devices, pico_device = pico.list_ports()
+            win.widget_dic["tk_select_box_liy6xbef"]["values"] = devices
             win.widget_dic["tk_select_box_liy6xbef"].current(devices.index(
                 pico_device))
+            win.press_connect(None)
             break
         except:
             retry = tk.messagebox.askokcancel(

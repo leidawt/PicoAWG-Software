@@ -26,6 +26,15 @@ class Pico:
         self.pico_device = pico_device
         return devices, pico_device
 
+    def is_open(self):
+        if self.ser is not None:
+            if self.ser.isOpen():
+                return True
+            else:
+                return False
+        else:
+            return False
+
     def connect(self, device):
         self.ser = serial.Serial(
             port=device,
@@ -42,13 +51,21 @@ class Pico:
     def send_command(self, command):
         if self.ser is not None:
             if self.ser.isOpen():
-                self.ser.write((command + '\r\n').encode('utf-8'))
+                command = command + '\r\n'
+                self.ser.write(command.encode('utf-8'))
+                print("send: {}".format(command))
 
     def reset(self):
         self.send_command("machine.reset()")
-        time.sleep(2)
-        # reconnect serial
-        self.connect(self.pico_device)
+        for _ in range(10):  # try 10 times
+            time.sleep(1)
+            # reconnect serial
+            try:
+                self.connect(self.pico_device)
+                print("connected")
+                break
+            except:
+                print("retry...")
 
     def set_wave(self, wave_type, wave_args, arb_data=None):
         if wave_type == "Sine":
@@ -62,7 +79,7 @@ class Pico:
         elif wave_type == "Arb":
             # send arb data first
             self.send_arb_lut(arb_data, wave_args)
-            command = f"wave1.func = arb;wave1.amplitude = {wave_args['amplitude']};wave1.offset = {wave_args['offset']};wave1.pars = [];setupwave(wavbuf[ibuf], {wave_args['freq']}, wave1);ibuf = (ibuf+1) % 2"
+            command = f"wave1.func = None;wave1.amplitude = {wave_args['amplitude']};wave1.offset = {wave_args['offset']};wave1.pars = [];setupwave(wavbuf[ibuf], {wave_args['freq']}, wave1);ibuf = (ibuf+1) % 2"
         else:
             return
 
@@ -120,6 +137,14 @@ class Pico:
             buf[iword*4+3] = (word & (255 << 24)) >> 24
 
         # write wavbuf[ibuf]
+        # command = "wavbuf[ibuf][0:{}] = [".format(nsamp*4)
+        # for i in range(100):
+        #     command = command+hex(buf[i])+","
+        # command = command+"]"
+        command = "wavbuf[ibuf][0:{}]={}".format(nsamp*4, bytes(buf).__str__())
+        print(nsamp)
+        print(command)
+        # self.send_command(command)
 
     def get_preview_data(self, wave_type, wave_args, arb_data=None):
         if wave_type == "Sine":
