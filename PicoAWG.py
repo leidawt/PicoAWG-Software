@@ -1,8 +1,10 @@
 """
-本代码由[Tkinter布局助手]生成
-当前版本:3.6.1
-官网:https://www.pytk.net/tkinter-helper
-QQ交流群:788392508
+PicoAWG V1.0
+leida_wt
+2023.06.18
+
+https://docs.python.org/3/library/tk.html
+https://www.pytk.net/tkinter-helper
 """
 from tkinter import *
 from tkinter.ttk import *
@@ -372,8 +374,11 @@ class Win(WinGUI):
     #     print("<Button-1>事件未处理", evt)
 
     def press_connect(self, evt):
-        self.pico.connect(win.widget_dic["tk_select_box_liy6xbef"].get())
-        self.widget_dic["tk_label_liy70c1g"]["text"] = "已连接"
+        if not self.pico.is_open():
+            self.pico.connect(win.widget_dic["tk_select_box_liy6xbef"].get())
+            self.widget_dic["tk_label_liy70c1g"]["text"] = "已连接"
+        else:
+            return
 
     def press_reset(self, evt):
         self.pico.reset()
