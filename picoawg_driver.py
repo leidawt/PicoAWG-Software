@@ -57,6 +57,7 @@ class Pico:
 
     def reset(self):
         self.send_command("machine.reset()")
+        time.sleep(3)
         for _ in range(10):  # try 10 times
             time.sleep(1)
             # reconnect serial
