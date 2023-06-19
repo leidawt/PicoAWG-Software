@@ -435,6 +435,7 @@ class Win(WinGUI):
         }
         print(wave_type)
         print(wave_args)
+        print("Fs = {:.2f}MHz".format(self.pico.get_sample_rate(freq) / 1e6))
 
         # preview
         self.preview_fig.clear()

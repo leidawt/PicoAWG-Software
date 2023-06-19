@@ -86,6 +86,17 @@ class Pico:
 
         self.send_command(command)
 
+    def get_sample_rate(self, f):
+        dac_clock = 125000000
+        maxnsamp = 4096
+        f = float(f)
+        div = dac_clock/(f*maxnsamp)
+        if div < 1.0:
+            clkdiv = 1
+        else:
+            clkdiv = int(div)+1
+        return dac_clock/clkdiv
+
     def send_arb_lut(self, arb_data, wave_args):
         dac_clock = 125000000
         maxnsamp = 4096
