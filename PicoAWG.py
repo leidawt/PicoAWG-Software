@@ -396,9 +396,9 @@ class Win(WinGUI):
         amplitude = self.widget_dic["tk_input_liy6snys"].get()
         offset = self.widget_dic["tk_input_liy6sqzb"].get()
         # pulse
-        risetime = float(self.widget_dic["tk_input_liy7mlu3"].get())/100
-        falltime = float(self.widget_dic["tk_input_liy7njo4"].get())/100
-        uptime = float(self.widget_dic["tk_input_liy7nliu"].get())/100
+        risetime = float(self.widget_dic["tk_input_liy7mlu3"].get()) / 100
+        falltime = float(self.widget_dic["tk_input_liy7njo4"].get()) / 100
+        uptime = float(self.widget_dic["tk_input_liy7nliu"].get()) / 100
         # noise
         quality = self.widget_dic["tk_select_box_liy7o0pw"].current()
         quality = [1, 10][quality]
@@ -467,7 +467,7 @@ if __name__ == "__main__":
     pico = Pico()
     win = Win()
     win.pico = pico
-    win.iconbitmap("icon.ico")
+    win.iconphoto(False, PhotoImage(file='./icon.png'))
 
     retry = True
     while retry:
