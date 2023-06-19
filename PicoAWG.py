@@ -40,6 +40,8 @@ class WinGUI(Tk):
             self)
         self.widget_dic["tk_frame_liy7292o"] = self.__tk_frame_liy7292o(self)
         self.widget_dic["tk_label_liy72kbn"] = self.__tk_label_liy72kbn(self)
+        self.widget_dic["tk_label_lj2s8vyg"] = self.__tk_label_lj2s8vyg(self)
+
         self.preview_fig = Figure(figsize=(3, 3), dpi=80)
         self.preview_canvas = FigureCanvasTkAgg(
             self.preview_fig, master=self.widget_dic["tk_frame_liy7292o"])
@@ -73,6 +75,11 @@ class WinGUI(Tk):
     def __tk_label_liy72kbn(self, parent):
         label = Label(parent, text="波形预览", anchor="center", )
         label.place(x=10, y=180, width=65, height=30)
+        return label
+
+    def __tk_label_lj2s8vyg(self, parent):
+        label = Label(parent, text="", anchor="center", )
+        label.place(x=80, y=180, width=120, height=30)
         return label
 
     def __tk_tabs_lixb1dlt(self, parent):
@@ -435,7 +442,9 @@ class Win(WinGUI):
         }
         print(wave_type)
         print(wave_args)
-        print("Fs = {:.2f}MHz".format(self.pico.get_sample_rate(freq) / 1e6))
+        # print("Fs = {:.2f}MHz".format(self.pico.get_sample_rate(freq) / 1e6))
+        self.widget_dic["tk_label_lj2s8vyg"]["text"] = "Fs = {:.2f}MHz".format(
+            self.pico.get_sample_rate(freq) / 1e6)
 
         # preview
         self.preview_fig.clear()
