@@ -9,14 +9,14 @@ https://www.pytk.net/tkinter-helper
 from tkinter import *
 from tkinter.ttk import *
 from typing import Dict
-import tkinter.messagebox
+# import tkinter.messagebox
 import tkinter as tk
 
 # matplotlib
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 # Implement the default Matplotlib key bindings.
-from matplotlib.backend_bases import key_press_handler
+# from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 import numpy as np
 
@@ -25,6 +25,7 @@ from picoawg_driver import Pico
 # sys
 import os
 import csv
+import ctypes
 
 # try to hide console
 # https://stackoverflow.com/questions/764631/how-to-hide-console-window-in-python
@@ -148,17 +149,17 @@ class WinGUI(Tk):
 
     def __tk_label_liy7kwgm(self, parent):
         label = Label(parent, text="上升时间", anchor="center", )
-        label.place(x=10, y=10, width=55, height=30)
+        label.place(x=10, y=10, width=65, height=30)
         return label
 
     def __tk_label_liy7ldin(self, parent):
         label = Label(parent, text="下降时间", anchor="center", )
-        label.place(x=10, y=50, width=55, height=30)
+        label.place(x=10, y=50, width=65, height=30)
         return label
 
     def __tk_label_liy7ley6(self, parent):
         label = Label(parent, text="高值时间", anchor="center", )
-        label.place(x=10, y=90, width=55, height=30)
+        label.place(x=10, y=90, width=65, height=30)
         return label
 
     def __tk_input_liy7mlu3(self, parent):
@@ -258,7 +259,7 @@ class WinGUI(Tk):
 
     def __tk_label_liy8gin4(self, parent):
         label = Label(parent, text="路径/数据", anchor="center", )
-        label.place(x=4, y=9, width=63, height=25)
+        label.place(x=4, y=9, width=74, height=25)
         return label
 
     def __tk_label_frame_liy6ifpl(self, parent):
@@ -358,17 +359,17 @@ class WinGUI(Tk):
 
     def __tk_label_liy6svie(self, parent):
         label = Label(parent, text="Hz", anchor="center", )
-        label.place(x=186, y=10, width=30, height=30)
+        label.place(x=182, y=10, width=35, height=30)
         return label
 
     def __tk_label_liy6t7a1(self, parent):
         label = Label(parent, text="Vpp", anchor="center", )
-        label.place(x=186, y=50, width=30, height=30)
+        label.place(x=182, y=50, width=35, height=30)
         return label
 
     def __tk_label_liy6tlfq(self, parent):
         label = Label(parent, text="V", anchor="center", )
-        label.place(x=186, y=90, width=30, height=30)
+        label.place(x=182, y=90, width=35, height=30)
         return label
 
     def __tk_button_liy71fq2(self, parent):
@@ -485,6 +486,15 @@ class Win(WinGUI):
 
 
 if __name__ == "__main__":
+    # match windows dpi scaling
+    try:  # >= win 8.1
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    except:  # win 8.0 or less
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except:
+            pass
+
     pico = Pico()
     win = Win()
     win.pico = pico
