@@ -30,11 +30,13 @@ import ctypes
 # try to hide console
 # https://stackoverflow.com/questions/764631/how-to-hide-console-window-in-python
 try:
-    import win32gui
-    import win32con
+    is_nuitka = "__compiled__" in globals()
+    if not is_nuitka:
+        import win32gui
+        import win32con
 
-    the_program_to_hide = win32gui.GetForegroundWindow()
-    win32gui.ShowWindow(the_program_to_hide, win32con.SW_HIDE)
+        the_program_to_hide = win32gui.GetForegroundWindow()
+        win32gui.ShowWindow(the_program_to_hide, win32con.SW_HIDE)
 except:
     pass
 
