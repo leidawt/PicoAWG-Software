@@ -9,16 +9,16 @@ https://www.pytk.net/tkinter-helper
 from tkinter import *
 from tkinter.ttk import *
 from typing import Dict
-# import tkinter.messagebox
-import tkinter as tk
+from tkinter import messagebox
+# import tkinter as tk
 
 # matplotlib
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg, NavigationToolbar2Tk)
+# from matplotlib.backends.backend_tkagg import (
+#     FigureCanvasTkAgg, NavigationToolbar2Tk)
 # Implement the default Matplotlib key bindings.
 # from matplotlib.backend_bases import key_press_handler
-from matplotlib.figure import Figure
-import numpy as np
+# from matplotlib.figure import Figure
+from tinynumpy import tinynumpy as np
 
 # driver
 from picoawg_driver import Pico
@@ -56,9 +56,15 @@ class WinGUI(Tk):
         self.widget_dic["tk_label_liy72kbn"] = self.__tk_label_liy72kbn(self)
         self.widget_dic["tk_label_lj2s8vyg"] = self.__tk_label_lj2s8vyg(self)
 
-        self.preview_fig = Figure(figsize=(3, 3), dpi=80)
-        self.preview_canvas = FigureCanvasTkAgg(
-            self.preview_fig, master=self.widget_dic["tk_frame_liy7292o"])
+        # self.preview_fig = Figure(figsize=(3, 3), dpi=80)
+        # self.preview_canvas = FigureCanvasTkAgg(
+        #     self.preview_fig, master=self.widget_dic["tk_frame_liy7292o"])
+        self.preview_canvas = Canvas(
+            master=self.widget_dic["tk_frame_liy7292o"], bg='white')
+        self.update()
+        self.cv_width = self.widget_dic["tk_frame_liy7292o"].winfo_width()
+        self.cv_height = self.widget_dic["tk_frame_liy7292o"].winfo_height()
+        self.preview_canvas.pack()
 
     def __win(self):
         self.title("PicoAWG")
@@ -425,23 +431,27 @@ class Win(WinGUI):
         quality = [1, 10][quality]
         # sinc
         width = self.widget_dic["tk_input_liy7rheh"].get()
-        # arb
-        arb_data = self.widget_dic["tk_text_liy7tt5n"].get("1.0", "end-1c")
 
-        try:
-            # if given path, load it first
-            if os.path.exists(arb_data):
-                with open(arb_data, newline='') as csvfile:
-                    reader = csv.DictReader(csvfile)
+        if wave_type == "Arb":
+            # arb
+            arb_data = self.widget_dic["tk_text_liy7tt5n"].get("1.0", "end-1c")
+
+            try:
+                # if given path, load it first
+                if os.path.exists(arb_data):
+                    with open(arb_data, newline='') as csvfile:
+                        reader = csv.DictReader(csvfile)
+                        arb_data = [float(row['value']) for row in reader]
+                else:
+                    reader = csv.DictReader(arb_data.splitlines())
                     arb_data = [float(row['value']) for row in reader]
-            else:
-                reader = csv.DictReader(arb_data.splitlines())
-                arb_data = [float(row['value']) for row in reader]
-            arb_data = np.array(arb_data)
-        except:
-            tk.messagebox.showwarning(
-                title='Warning', message='Unsupported data type.')
-            return
+                arb_data = np.array(arb_data)
+            except:
+                messagebox.showwarning(
+                    title='Warning', message='Unsupported data type.')
+                return
+        else:
+            arb_data = []
         # print(arb_data)
 
         wave_args = {
@@ -461,15 +471,34 @@ class Win(WinGUI):
             self.pico.get_sample_rate(freq) / 1e6)
 
         # preview
-        self.preview_fig.clear()
-        self.preview_fig.add_subplot(111).plot(
-            self.pico.get_preview_data(wave_type, wave_args, arb_data))
-        self.preview_canvas.draw()
-        self.preview_canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
+        # self.preview_fig.clear()
+        # self.preview_fig.add_subplot(111).plot(
+        #     self.pico.get_preview_data(wave_type, wave_args, arb_data))
+        # self.preview_canvas.draw()
+        # self.preview_canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
+        preview_data = self.pico.get_preview_data(
+            wave_type, wave_args, arb_data)
+        self.preview_canvas.delete("all")
+        x_step = self.cv_width*0.95/len(preview_data)
+        x_data = [i*x_step+5 for i in range(len(preview_data))]
+        y_max = max(preview_data)
+        y_min = min(preview_data)
+        y_data = [self.cv_height-5-(y-y_min) / (y_max-y_min)
+                  * 0.95 * self.cv_height for y in preview_data]
+        # for (x, y) in zip(x_data, y_data):
+        # self.preview_canvas.create_oval(x, y, x+1, y+1, fill='blue')
+        for i in range(len(x_data)-1):
+            x0 = x_data[i]
+            y0 = y_data[i]
+            x1 = x_data[i+1]
+            y1 = y_data[i+1]
+            self.preview_canvas.create_line(
+                x0, y0, x1, y1, fill='blue', width=2)
+        self.preview_canvas.pack()
 
         # set device
         if not self.pico.is_open():
-            tk.messagebox.showwarning(
+            messagebox.showwarning(
                 title='Warning', message='Device offline. Connect it first.')
             return
         self.pico.set_wave(wave_type, wave_args, arb_data)
@@ -512,7 +541,7 @@ if __name__ == "__main__":
             win.press_connect(None)
             break
         except:
-            retry = tk.messagebox.askokcancel(
+            retry = messagebox.askokcancel(
                 title='Warning', message='No pico device founded, retry?')
 
     win.mainloop()

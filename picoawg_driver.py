@@ -3,8 +3,8 @@ import serial.tools.list_ports
 import time
 from math import pi, sin, exp, sqrt, floor
 from random import random
-from scipy import signal
-import numpy as np
+# from scipy import signal
+from tinynumpy import tinynumpy as np
 
 
 class Pico:
@@ -131,7 +131,8 @@ class Pico:
 
         # handle arb_data
         # resample to nsamp points
-        arb_data = signal.resample(arb_data, nsamp)
+        # arb_data = signal.resample(arb_data, nsamp)
+        arb_data = self._resample(arb_data, nsamp)
         # norm to [-1, 1]
         arb_data = (arb_data-arb_data.min()) / \
             (arb_data.max()-arb_data.min())*2-1
@@ -174,24 +175,25 @@ class Pico:
             st += n
 
     def get_preview_data(self, wave_type, wave_args, arb_data=None):
+        n_points = 200
         if wave_type == "Sine":
             pars = []
-            return [self._sine(x/1000, pars) for x in range(1000)]
+            return [self._sine(x/n_points, pars) for x in range(n_points)]
         elif wave_type == "Pulse":
             pars = [wave_args["risetime"],
                     wave_args["uptime"], wave_args["falltime"]]
             pars = [float(each) for each in pars]
-            return [self._pulse(x/1000, pars) for x in range(1000)]
+            return [self._pulse(x/n_points, pars) for x in range(n_points)]
         elif wave_type == "Noise":
             pars = [wave_args["quality"]]
-            return [self._noise(x/1000, pars) for x in range(1000)]
+            return [self._noise(x/n_points, pars) for x in range(n_points)]
 
         elif wave_type == "Sinc":
             pars = [float(wave_args["width"])]
-            return [self._sinc(x/1000, pars) for x in range(1000)]
+            return [self._sinc(x/n_points, pars) for x in range(n_points)]
 
         elif wave_type == "Arb":
-            return arb_data
+            return self._resample(arb_data, 100)
 
         else:
             return []
@@ -234,6 +236,12 @@ class Pico:
                 if self.ser.read(3) == b'\x3E\x3E\x20':
                     # print("接收到指定字节序列")
                     break
+
+    def _resample(self, arb_data, nsamp):
+        # resample nsamp points
+        len_arb_data = len(arb_data)
+        step = len_arb_data / nsamp
+        return np.array([arb_data[min(floor(i*step), len_arb_data)] for i in range(nsamp)])
 
 
 if __name__ == '__main__':
